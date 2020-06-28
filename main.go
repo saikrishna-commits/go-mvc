@@ -52,6 +52,12 @@ func New(text string) error {
 	return &errorString{text}
 }
 
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
 func init() {
 	godotenv.Load(".env") // load env variables from specific file , alterantive we can use viper package
 }
@@ -118,6 +124,7 @@ func createAndTest(w http.ResponseWriter, r *http.Request) {
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	// Getting the instance of the collection from MongoDB Database
 	collection := db.MongoClient.Database("sample_mflix").Collection("movies")
 
@@ -190,6 +197,7 @@ func queryToByID(id string) (models.PostData, error) {
 }
 
 func covidSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	setupResponse(&w, r)
 	data, err := getCovidSummary()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
