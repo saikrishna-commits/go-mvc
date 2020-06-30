@@ -2,21 +2,41 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq" // postgres golang driver
 )
 
-type Env struct {
-	DB *sql.DB
-}
+var pgCon *sql.DB
 
-func New() (*sql.DB, error) {
-	db, err := sql.Open("mysql", "root:password@(tcp:localhost:3306)")
+//CreatePgConnection does connects to Postgres
+func CreatePgConnection() *sql.DB {
+	// load .env file
+	err := godotenv.Load(".env")
+
 	if err != nil {
-		return nil, err
+		log.Fatalf("Error loading .env file")
 	}
-	if err = db.Ping(); err != nil {
-		return nil, err
+
+	// Open the connection
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URI"))
+	pgCon = db
+
+	if err != nil {
+		panic(err)
 	}
-	return db, nil
+
+	// check the connection
+	err = db.Ping()
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Successfully connected to PostGres .....")
+	// return the connection
+	return db
 }
