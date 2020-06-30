@@ -9,10 +9,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/justinas/alice"
+	"github.com/justinas/nosurf"
 	db "github.com/saikrishna-commits/go-mvc/dbCon"
 
 	models "github.com/saikrishna-commits/go-mvc/models"
@@ -69,7 +72,7 @@ func main() {
 	handler := http.NewServeMux()
 
 	db.ConnectDatabaseMongo() //connect to mongo
-	db.CreatePgConnection()   //connect to postgress
+	db.CreatePgConnection()   //connect to postgres
 
 	handler.HandleFunc("/addPost", addPostHandler)
 	handler.HandleFunc("/covid", covidSummaryHandler)
@@ -100,13 +103,16 @@ func main() {
 		json.NewEncoder(w).Encode(data)
 	})
 
+	wrappedHandler := alice.New(LoggingMiddleware, recoverHandler, nosurf.NewPure).Then(handler)
+
 	server := &http.Server{
 		Addr:         ":" + os.Getenv("PORT"),
-		Handler:      handler,
+		Handler:      wrappedHandler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
 
+	// Start our HTTP server
 	server.ListenAndServe()
 
 }
@@ -247,3 +253,46 @@ func getCovidSummary() (models.GlobalCovid, error) {
 // 		})
 // 	}
 // }
+
+// catch panics, log them and keep the application running
+func recoverHandler(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("panic: %+v", err)
+				http.Error(w, http.StatusText(500), 500)
+			}
+		}()
+
+		next.ServeHTTP(w, r)
+	}
+
+	return http.HandlerFunc(fn)
+}
+
+// LoggingMiddleware logs the incoming HTTP request & its duration.
+func LoggingMiddleware(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(
+					"err", err,
+					"trace", debug.Stack(),
+				)
+			}
+		}()
+
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		log.Println(
+			"method", r.Method,
+			"path", r.URL.EscapedPath(),
+			"duration", time.Since(start),
+		)
+	}
+
+	return http.HandlerFunc(fn)
+}

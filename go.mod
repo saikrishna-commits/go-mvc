@@ -6,6 +6,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/joho/godotenv v1.3.0
+	github.com/justinas/alice v1.2.0 // indirect
+	github.com/justinas/nosurf v1.1.0 // indirect
 	github.com/lib/pq v1.7.0
 	go.mongodb.org/mongo-driver v1.3.4
 )
