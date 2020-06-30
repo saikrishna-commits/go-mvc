@@ -14,6 +14,7 @@ import (
 
 	"github.com/joho/godotenv"
 	db "github.com/saikrishna-commits/go-mvc/dbCon"
+
 	models "github.com/saikrishna-commits/go-mvc/models"
 	services "github.com/saikrishna-commits/go-mvc/services"
 	utils "github.com/saikrishna-commits/go-mvc/utils"
@@ -64,14 +65,18 @@ func init() {
 }
 
 func main() {
-	db.ConnectDatabaseMongo() //connect to mongo
 
-	http.HandleFunc("/addPost", addPostHandler)
-	http.HandleFunc("/covid", covidSummaryHandler)
-	http.HandleFunc("/hello", hello)
-	http.Handle("/protectedRoute", services.IsAuthorized(hello))
-	http.HandleFunc("/createAndTestJWT", createAndTest)
-	http.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
+	handler := http.NewServeMux()
+
+	db.ConnectDatabaseMongo() //connect to mongo
+	db.CreatePgConnection()   //connect to postgress
+
+	handler.HandleFunc("/addPost", addPostHandler)
+	handler.HandleFunc("/covid", covidSummaryHandler)
+	handler.HandleFunc("/hello", hello)
+	handler.Handle("/protectedRoute", services.IsAuthorized(hello))
+	handler.HandleFunc("/createAndTestJWT", createAndTest)
+	handler.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
 		notAllowedMethods := []string{"POST", "PATCH", "DELETE", "PUT"}
 		methodType := r.Method
 		isNotAllowed := utils.Contains(notAllowedMethods, methodType)
@@ -95,10 +100,15 @@ func main() {
 		json.NewEncoder(w).Encode(data)
 	})
 
-	fmt.Printf("Starting server ...\n")
-	if err := http.ListenAndServe(os.Getenv("PORT"), nil); err != nil {
-		log.Fatal(err)
+	server := &http.Server{
+		Addr:         ":" + os.Getenv("PORT"),
+		Handler:      handler,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
+
+	server.ListenAndServe()
+
 }
 
 func createAndTest(w http.ResponseWriter, r *http.Request) {
