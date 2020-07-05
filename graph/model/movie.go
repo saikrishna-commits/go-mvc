@@ -15,6 +15,6 @@ type Movie struct {
 	Year        int64      `json:"year,omitempty"`
     // Released    time.Time  `json:"released,omitempty"`
     //  LastUpdated time.Time  `json:"lastUpdated,omitempty"`
-	ImdbRating  ImdbRating `json:"imdb"`
+	ImdbRating  ImdbRating `bson:"imdb" json:"imdb"`  // nested elements
 }
 
