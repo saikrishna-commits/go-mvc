@@ -7,6 +7,11 @@ type NewTodo struct {
 	UserID string `json:"userId"`
 }
 
+type Theatre struct {
+	TheatreID *int      `json:"theatreId"`
+	Location  *Location `json:"location"`
+}
+
 type User struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`

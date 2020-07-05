@@ -45,9 +45,26 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Address struct {
+		City    func(childComplexity int) int
+		State   func(childComplexity int) int
+		Street1 func(childComplexity int) int
+		Zipcode func(childComplexity int) int
+	}
+
+	Geo struct {
+		Coordinates func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
 	ImdbRating struct {
 		Rating func(childComplexity int) int
 		Votes  func(childComplexity int) int
+	}
+
+	Location struct {
+		Address func(childComplexity int) int
+		Geo     func(childComplexity int) int
 	}
 
 	Movie struct {
@@ -65,8 +82,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Movies func(childComplexity int) int
-		Todos  func(childComplexity int) int
+		Movies   func(childComplexity int) int
+		Theatres func(childComplexity int) int
+		Todos    func(childComplexity int) int
+	}
+
+	Theatre struct {
+		Location  func(childComplexity int) int
+		TheatreID func(childComplexity int) int
 	}
 
 	Todo struct {
@@ -84,7 +107,6 @@ type ComplexityRoot struct {
 
 type MovieResolver interface {
 	ID(ctx context.Context, obj *model.Movie) (string, error)
-	ImdbRating(ctx context.Context, obj *model.Movie) (*model.ImdbRating, error)
 }
 type MutationResolver interface {
 	CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error)
@@ -92,6 +114,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Todos(ctx context.Context) ([]*model.Todo, error)
 	Movies(ctx context.Context) ([]*model.Movie, error)
+	Theatres(ctx context.Context) ([]*model.Theatre, error)
 }
 type TodoResolver interface {
 	User(ctx context.Context, obj *model.Todo) (*model.User, error)
@@ -112,6 +135,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Address.city":
+		if e.complexity.Address.City == nil {
+			break
+		}
+
+		return e.complexity.Address.City(childComplexity), true
+
+	case "Address.state":
+		if e.complexity.Address.State == nil {
+			break
+		}
+
+		return e.complexity.Address.State(childComplexity), true
+
+	case "Address.street1":
+		if e.complexity.Address.Street1 == nil {
+			break
+		}
+
+		return e.complexity.Address.Street1(childComplexity), true
+
+	case "Address.zipcode":
+		if e.complexity.Address.Zipcode == nil {
+			break
+		}
+
+		return e.complexity.Address.Zipcode(childComplexity), true
+
+	case "Geo.coordinates":
+		if e.complexity.Geo.Coordinates == nil {
+			break
+		}
+
+		return e.complexity.Geo.Coordinates(childComplexity), true
+
+	case "Geo.type":
+		if e.complexity.Geo.Type == nil {
+			break
+		}
+
+		return e.complexity.Geo.Type(childComplexity), true
+
 	case "ImdbRating.rating":
 		if e.complexity.ImdbRating.Rating == nil {
 			break
@@ -125,6 +190,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ImdbRating.Votes(childComplexity), true
+
+	case "Location.address":
+		if e.complexity.Location.Address == nil {
+			break
+		}
+
+		return e.complexity.Location.Address(childComplexity), true
+
+	case "Location.geo":
+		if e.complexity.Location.Geo == nil {
+			break
+		}
+
+		return e.complexity.Location.Geo(childComplexity), true
 
 	case "Movie.cast":
 		if e.complexity.Movie.Cast == nil {
@@ -194,12 +273,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Movies(childComplexity), true
 
+	case "Query.theatres":
+		if e.complexity.Query.Theatres == nil {
+			break
+		}
+
+		return e.complexity.Query.Theatres(childComplexity), true
+
 	case "Query.todos":
 		if e.complexity.Query.Todos == nil {
 			break
 		}
 
 		return e.complexity.Query.Todos(childComplexity), true
+
+	case "Theatre.location":
+		if e.complexity.Theatre.Location == nil {
+			break
+		}
+
+		return e.complexity.Theatre.Location(childComplexity), true
+
+	case "Theatre.theatreId":
+		if e.complexity.Theatre.TheatreID == nil {
+			break
+		}
+
+		return e.complexity.Theatre.TheatreID(childComplexity), true
 
 	case "Todo.done":
 		if e.complexity.Todo.Done == nil {
@@ -325,6 +425,28 @@ type User {
 	name: String!
 }
 
+type Address {
+	street1: String
+	city: String
+	state: String
+	zipcode: String
+}
+
+type Geo {
+	type: String
+	coordinates: [Float]
+}
+
+type Location {
+	address: Address
+	geo: Geo
+}
+
+type Theatre {
+	theatreId: Int
+	location: Location
+}
+
 type Movie {
 	_id: ID!
 	title: String
@@ -345,6 +467,7 @@ type ImdbRating {
 type Query {
 	todos: [Todo!]!
 	movies: [Movie]
+	theatres: [Theatre]
 }
 
 input NewTodo {
@@ -427,6 +550,192 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _Address_street1(ctx context.Context, field graphql.CollectedField, obj *model.Address) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Address",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Street1, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Address_city(ctx context.Context, field graphql.CollectedField, obj *model.Address) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Address",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.City, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Address_state(ctx context.Context, field graphql.CollectedField, obj *model.Address) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Address",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Address_zipcode(ctx context.Context, field graphql.CollectedField, obj *model.Address) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Address",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Zipcode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Geo_type(ctx context.Context, field graphql.CollectedField, obj *model.Geo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Geo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Geo_coordinates(ctx context.Context, field graphql.CollectedField, obj *model.Geo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Geo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Coordinates, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]float64)
+	fc.Result = res
+	return ec.marshalOFloat2ᚕfloat64(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _ImdbRating_rating(ctx context.Context, field graphql.CollectedField, obj *model.ImdbRating) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -487,6 +796,68 @@ func (ec *executionContext) _ImdbRating_votes(ctx context.Context, field graphql
 	res := resTmp.(int64)
 	fc.Result = res
 	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Location_address(ctx context.Context, field graphql.CollectedField, obj *model.Location) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Location",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.Address)
+	fc.Result = res
+	return ec.marshalOAddress2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Location_geo(ctx context.Context, field graphql.CollectedField, obj *model.Location) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Location",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Geo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.Geo)
+	fc.Result = res
+	return ec.marshalOGeo2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐGeo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Movie__id(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
@@ -689,13 +1060,13 @@ func (ec *executionContext) _Movie_imdbRating(ctx context.Context, field graphql
 		Object:   "Movie",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Movie().ImdbRating(rctx, obj)
+		return obj.ImdbRating, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -704,9 +1075,9 @@ func (ec *executionContext) _Movie_imdbRating(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.ImdbRating)
+	res := resTmp.(model.ImdbRating)
 	fc.Result = res
-	return ec.marshalOImdbRating2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx, field.Selections, res)
+	return ec.marshalOImdbRating2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -815,6 +1186,37 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 	return ec.marshalOMovie2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐMovie(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_theatres(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Theatres(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Theatre)
+	fc.Result = res
+	return ec.marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -882,6 +1284,68 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Theatre_theatreId(ctx context.Context, field graphql.CollectedField, obj *model.Theatre) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Theatre",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TheatreID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Theatre_location(ctx context.Context, field graphql.CollectedField, obj *model.Theatre) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Theatre",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Location)
+	fc.Result = res
+	return ec.marshalOLocation2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Todo_id(ctx context.Context, field graphql.CollectedField, obj *model.Todo) (ret graphql.Marshaler) {
@@ -2175,6 +2639,62 @@ func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj inter
 
 // region    **************************** object.gotpl ****************************
 
+var addressImplementors = []string{"Address"}
+
+func (ec *executionContext) _Address(ctx context.Context, sel ast.SelectionSet, obj *model.Address) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, addressImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Address")
+		case "street1":
+			out.Values[i] = ec._Address_street1(ctx, field, obj)
+		case "city":
+			out.Values[i] = ec._Address_city(ctx, field, obj)
+		case "state":
+			out.Values[i] = ec._Address_state(ctx, field, obj)
+		case "zipcode":
+			out.Values[i] = ec._Address_zipcode(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var geoImplementors = []string{"Geo"}
+
+func (ec *executionContext) _Geo(ctx context.Context, sel ast.SelectionSet, obj *model.Geo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, geoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Geo")
+		case "type":
+			out.Values[i] = ec._Geo_type(ctx, field, obj)
+		case "coordinates":
+			out.Values[i] = ec._Geo_coordinates(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var imdbRatingImplementors = []string{"ImdbRating"}
 
 func (ec *executionContext) _ImdbRating(ctx context.Context, sel ast.SelectionSet, obj *model.ImdbRating) graphql.Marshaler {
@@ -2190,6 +2710,32 @@ func (ec *executionContext) _ImdbRating(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._ImdbRating_rating(ctx, field, obj)
 		case "votes":
 			out.Values[i] = ec._ImdbRating_votes(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var locationImplementors = []string{"Location"}
+
+func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet, obj *model.Location) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, locationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Location")
+		case "address":
+			out.Values[i] = ec._Location_address(ctx, field, obj)
+		case "geo":
+			out.Values[i] = ec._Location_geo(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2237,16 +2783,7 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 		case "year":
 			out.Values[i] = ec._Movie_year(ctx, field, obj)
 		case "imdbRating":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Movie_imdbRating(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Movie_imdbRating(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2329,10 +2866,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_movies(ctx, field)
 				return res
 			})
+		case "theatres":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_theatres(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var theatreImplementors = []string{"Theatre"}
+
+func (ec *executionContext) _Theatre(ctx context.Context, sel ast.SelectionSet, obj *model.Theatre) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, theatreImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Theatre")
+		case "theatreId":
+			out.Values[i] = ec._Theatre_theatreId(ctx, field, obj)
+		case "location":
+			out.Values[i] = ec._Theatre_location(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3009,6 +3583,10 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAddress2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐAddress(ctx context.Context, sel ast.SelectionSet, v model.Address) graphql.Marshaler {
+	return ec._Address(ctx, sel, &v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)
 }
@@ -3040,15 +3618,52 @@ func (ec *executionContext) marshalOFloat2float64(ctx context.Context, sel ast.S
 	return graphql.MarshalFloat(v)
 }
 
+func (ec *executionContext) unmarshalOFloat2ᚕfloat64(ctx context.Context, v interface{}) ([]float64, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]float64, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalOFloat2float64(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOFloat2ᚕfloat64(ctx context.Context, sel ast.SelectionSet, v []float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOFloat2float64(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOGeo2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐGeo(ctx context.Context, sel ast.SelectionSet, v model.Geo) graphql.Marshaler {
+	return ec._Geo(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalOImdbRating2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx context.Context, sel ast.SelectionSet, v model.ImdbRating) graphql.Marshaler {
 	return ec._ImdbRating(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOImdbRating2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx context.Context, sel ast.SelectionSet, v *model.ImdbRating) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ImdbRating(ctx, sel, v)
+func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalInt(v)
+}
+
+func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	return graphql.MarshalInt(v)
 }
 
 func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
@@ -3057,6 +3672,32 @@ func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface
 
 func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	return graphql.MarshalInt64(v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOInt2int(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOInt2int(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOLocation2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v model.Location) graphql.Marshaler {
+	return ec._Location(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v *model.Location) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Location(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMovie2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐMovie(ctx context.Context, sel ast.SelectionSet, v model.Movie) graphql.Marshaler {
@@ -3163,6 +3804,57 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOTheatre2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v model.Theatre) graphql.Marshaler {
+	return ec._Theatre(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v []*model.Theatre) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTheatre2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOTheatre2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v *model.Theatre) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Theatre(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
