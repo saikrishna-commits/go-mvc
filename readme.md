@@ -1,5 +1,13 @@
 
 
+
+#### to run rest-api 
+    make run
+
+#### to run gql server
+    make run-gql
+
+
 ### deploy to heroku 
 
    1) heroku conatiner:login 
