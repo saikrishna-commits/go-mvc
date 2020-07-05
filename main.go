@@ -67,6 +67,8 @@ func init() {
 	godotenv.Load(".env") // load env variables from specific file , alterantive we can use viper package
 }
 
+const defaultPort = "8080"
+
 func main() {
 
 	handler := http.NewServeMux()
@@ -105,8 +107,13 @@ func main() {
 
 	wrappedHandler := alice.New(LoggingMiddleware, recoverHandler, nosurf.NewPure).Then(handler)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
 	server := &http.Server{
-		Addr:         ":" + os.Getenv("PORT"),
+		Addr:         ":" + port,
 		Handler:      wrappedHandler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
