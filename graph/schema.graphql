@@ -16,6 +16,28 @@ type User {
 	name: String!
 }
 
+type Address {
+	street1: String
+	city: String
+	state: String
+	zipcode: String
+}
+
+type Geo {
+	type: String
+	coordinates: [Float]
+}
+
+type Location {
+	address: Address
+	geo: Geo
+}
+
+type Theatre {
+	theatreId: Int
+	location: Location
+}
+
 type Movie {
 	_id: ID!
 	title: String
@@ -36,6 +58,7 @@ type ImdbRating {
 type Query {
 	todos: [Todo!]!
 	movies: [Movie]
+	theatres: [Theatre]
 }
 
 input NewTodo {
