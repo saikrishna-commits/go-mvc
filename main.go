@@ -8,19 +8,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/justinas/alice"
-	"github.com/justinas/nosurf"
 	db "github.com/saikrishna-commits/go-mvc/dbCon"
 
 	models "github.com/saikrishna-commits/go-mvc/models"
 	services "github.com/saikrishna-commits/go-mvc/services"
-	utils "github.com/saikrishna-commits/go-mvc/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -67,62 +62,62 @@ func init() {
 	godotenv.Load(".env") // load env variables from specific file , alterantive we can use viper package
 }
 
-const defaultPort = "8080"
 
-func main() {
 
-	handler := http.NewServeMux()
+// func main() {
 
-	db.ConnectDatabaseMongo() //connect to mongo
-	db.CreatePgConnection()   //connect to postgres
+// 	handler := http.NewServeMux()
 
-	handler.HandleFunc("/addPost", addPostHandler)
-	handler.HandleFunc("/covid", covidSummaryHandler)
-	handler.HandleFunc("/hello", hello)
-	handler.Handle("/protectedRoute", services.IsAuthorized(hello))
-	handler.HandleFunc("/createAndTestJWT", createAndTest)
-	handler.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
-		notAllowedMethods := []string{"POST", "PATCH", "DELETE", "PUT"}
-		methodType := r.Method
-		isNotAllowed := utils.Contains(notAllowedMethods, methodType)
-		if isNotAllowed == true {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		id := strings.SplitN(r.URL.Path, "/", 3)[2]
-		if len(id) == 0 {
-			http.Error(w, "Missing Input", http.StatusInternalServerError)
-			return
-		}
+// 	db.ConnectDatabaseMongo() //connect to mongo
+// 	db.CreatePgConnection()   //connect to postgres
 
-		data, err := queryToByID(id)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+// 	handler.HandleFunc("/addPost", addPostHandler)
+// 	handler.HandleFunc("/covid", covidSummaryHandler)
+// 	handler.HandleFunc("/hello", hello)
+// 	handler.Handle("/protectedRoute", services.IsAuthorized(hello))
+// 	handler.HandleFunc("/createAndTestJWT", createAndTest)
+// 	handler.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
+// 		notAllowedMethods := []string{"POST", "PATCH", "DELETE", "PUT"}
+// 		methodType := r.Method
+// 		isNotAllowed := utils.Contains(notAllowedMethods, methodType)
+// 		if isNotAllowed == true {
+// 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+// 			return
+// 		}
+// 		id := strings.SplitN(r.URL.Path, "/", 3)[2]
+// 		if len(id) == 0 {
+// 			http.Error(w, "Missing Input", http.StatusInternalServerError)
+// 			return
+// 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		json.NewEncoder(w).Encode(data)
-	})
+// 		data, err := queryToByID(id)
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
 
-	wrappedHandler := alice.New(LoggingMiddleware, recoverHandler, nosurf.NewPure).Then(handler)
+// 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+// 		json.NewEncoder(w).Encode(data)
+// 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
+// 	wrappedHandler := alice.New(LoggingMiddleware, recoverHandler, nosurf.NewPure).Then(handler)
 
-	server := &http.Server{
-		Addr:         ":" + port,
-		Handler:      wrappedHandler,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-	}
+// 	port := os.Getenv("PORT")
+// 	if port == "" {
+// 		port = "8080"
+// 	}
 
-	// Start our HTTP server
-	server.ListenAndServe()
+// 	server := &http.Server{
+// 		Addr:         ":" + port,
+// 		Handler:      wrappedHandler,
+// 		ReadTimeout:  5 * time.Second,
+// 		WriteTimeout: 5 * time.Second,
+// 	}
 
-}
+// 	// Start our HTTP server
+// 	server.ListenAndServe()
+
+// }
 
 func createAndTest(w http.ResponseWriter, r *http.Request) {
 	validToken, err := services.GenerateJWT()
