@@ -84,6 +84,7 @@ type ComplexityRoot struct {
 
 type MovieResolver interface {
 	ID(ctx context.Context, obj *model.Movie) (string, error)
+	ImdbRating(ctx context.Context, obj *model.Movie) (*model.ImdbRating, error)
 }
 type MutationResolver interface {
 	CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error)
@@ -688,13 +689,13 @@ func (ec *executionContext) _Movie_imdbRating(ctx context.Context, field graphql
 		Object:   "Movie",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ImdbRating, nil
+		return ec.resolvers.Movie().ImdbRating(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -703,9 +704,9 @@ func (ec *executionContext) _Movie_imdbRating(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.ImdbRating)
+	res := resTmp.(*model.ImdbRating)
 	fc.Result = res
-	return ec.marshalOImdbRating2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx, field.Selections, res)
+	return ec.marshalOImdbRating2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2236,7 +2237,16 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 		case "year":
 			out.Values[i] = ec._Movie_year(ctx, field, obj)
 		case "imdbRating":
-			out.Values[i] = ec._Movie_imdbRating(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Movie_imdbRating(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3032,6 +3042,13 @@ func (ec *executionContext) marshalOFloat2float64(ctx context.Context, sel ast.S
 
 func (ec *executionContext) marshalOImdbRating2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx context.Context, sel ast.SelectionSet, v model.ImdbRating) graphql.Marshaler {
 	return ec._ImdbRating(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOImdbRating2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐImdbRating(ctx context.Context, sel ast.SelectionSet, v *model.ImdbRating) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ImdbRating(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {

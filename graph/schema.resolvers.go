@@ -22,6 +22,10 @@ func (r *movieResolver) ID(ctx context.Context, obj *model.Movie) (string, error
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *movieResolver) ImdbRating(ctx context.Context, obj *model.Movie) (*model.ImdbRating, error) {
+	return &model.ImdbRating{Rating: obj.ImdbRating.Rating,Votes: 20}, nil
+}
+
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
 	randN, _ := rand.Int(rand.Reader, big.NewInt(1000))
 	todo := &model.Todo{
@@ -38,6 +42,7 @@ func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 }
 
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
+	curCtx := context.Background()
 	// choose Collection
 	collection := db.MongoClient.Database("sample_mflix").Collection("movies")
 
@@ -47,17 +52,16 @@ func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 	findOptions.SetSort(bson.D{{"title", -1}})
 
 	// Writing query to fetch the Data from the `movies` collection
-	cur, err := collection.Find(context.Background(), bson.D{
+	cur, err := collection.Find(curCtx, bson.D{
 		{"year", bson.D{
 			{"$gt", 2010},
 		}}}, findOptions)
 
-	defer cur.Close(context.Background())
+	defer cur.Close(curCtx)
 
 	if err = cur.All(ctx, &r.movies); err != nil {
 		log.Fatal(err)
 	}
-
 
 	return r.movies, nil
 }
@@ -89,8 +93,8 @@ type todoResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *movieResolver) ImdbRating(ctx context.Context, obj *model.Movie) (*model.ImdbRating, error) {
-	return &model.ImdbRating{Rating: obj.ImdbRating.Rating, Votes: obj.ImdbRating.Votes}, nil
+func (r *queryResolver) ImdbRating(ctx context.Context) (*model.ImdbRating, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 func (r *movieResolver) Released(ctx context.Context, obj *model.Movie) (*time.Time, error) {
 	panic(fmt.Errorf("not implemented"))

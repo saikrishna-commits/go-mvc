@@ -6,6 +6,7 @@ import "github.com/saikrishna-commits/go-mvc/graph/model"
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
+//Resolver = Root resolver
 type Resolver struct{
 	todos []*model.Todo
 	movies []*model.Movie
