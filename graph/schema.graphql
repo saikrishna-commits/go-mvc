@@ -1,0 +1,48 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+type Todo {
+	id: ID!
+	text: String!
+	done: Boolean!
+	user: User!
+}
+
+type User {
+	id: ID!
+	name: String!
+}
+
+type Movie {
+	_id: ID!
+	title: String
+	cast: [String]
+	directors: [String]
+	genres: [String]
+	year: Int
+	# released: Time
+	# lastUpdated: Time
+	imdbRating: ImdbRating
+}
+
+type ImdbRating {
+	rating: Float
+	votes: Int
+}
+
+type Query {
+	todos: [Todo!]!
+	movies: [Movie]
+}
+
+input NewTodo {
+	text: String!
+	userId: String!
+}
+
+type Mutation {
+	createTodo(input: NewTodo!): Todo!
+}
