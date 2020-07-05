@@ -3,7 +3,7 @@ name: Lint Go Code
 on:
   push:
     branches:
-      - gql-working
+      - master
 
 jobs:
   lint:

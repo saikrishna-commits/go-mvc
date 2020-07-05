@@ -3,7 +3,7 @@ name: Run Test
 on:
     push:
       branches:
-        - gql-working
+        - master
   
   name: Test Across Matrix
   
