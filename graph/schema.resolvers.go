@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"time"
 
-	db "github.com/saikrishna-commits/go-mvc/dbCon"
+	"github.com/saikrishna-commits/go-mvc/db"
 	"github.com/saikrishna-commits/go-mvc/graph/generated"
 	"github.com/saikrishna-commits/go-mvc/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,10 +19,6 @@ import (
 
 func (r *movieResolver) ID(ctx context.Context, obj *model.Movie) (string, error) {
 	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *movieResolver) ImdbRating(ctx context.Context, obj *model.Movie) (*model.ImdbRating, error) {
-	return &model.ImdbRating{Rating: obj.ImdbRating.Rating,Votes: 20}, nil
 }
 
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
@@ -66,8 +61,41 @@ func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 	return r.movies, nil
 }
 
+func (r *queryResolver) Theaters(ctx context.Context) ([]*model.Theater, error) {
+	curCtx := context.Background()
+	// choose Collection
+	collection := db.MongoClient.Database("sample_mflix").Collection("theaters")
+
+	//find options
+	findOptions := options.Find()
+	findOptions.SetLimit(2)
+	findOptions.SetSort(bson.D{{"theaterId", -1}})
+
+	// Writing query to fetch the Data from the `movies` collection
+	cur, err := collection.Find(curCtx, bson.D{
+		{"theaterId", bson.D{
+			{"$gt", 100},
+		}}}, findOptions)
+
+	defer cur.Close(curCtx)
+
+	if err = cur.All(ctx, &r.theaters); err != nil {
+		log.Fatal(err)
+	}
+
+	return r.theaters, nil
+}
+
 func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
 	return &model.User{ID: obj.UserID, Name: "user " + obj.UserID}, nil
+}
+
+func (r *todoResolver) UserLoader(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *todoResolver) UserRaw(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Movie returns generated.MovieResolver implementation.
@@ -93,14 +121,8 @@ type todoResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) ImdbRating(ctx context.Context) (*model.ImdbRating, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-func (r *movieResolver) Released(ctx context.Context, obj *model.Movie) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-func (r *movieResolver) LastUpdated(ctx context.Context, obj *model.Movie) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *theaterResolver) TheaterID(ctx context.Context, obj *model.Theater) (*int, error) {
+	panic("Not implemented")
 }
 
-type imdbRatingResolver struct{ *Resolver }
+type theaterResolver struct{ *Resolver }

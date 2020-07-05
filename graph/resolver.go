@@ -1,6 +1,11 @@
 package graph
 //go:generate go run github.com/99designs/gqlgen
-import "github.com/saikrishna-commits/go-mvc/graph/model"
+import (
+	"database/sql"
+
+	"github.com/saikrishna-commits/go-mvc/graph/model"
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -8,6 +13,9 @@ import "github.com/saikrishna-commits/go-mvc/graph/model"
 
 //Resolver = Root resolver
 type Resolver struct{
-	todos []*model.Todo
+	mongo *mongo.Client
+	sql *sql.DB
 	movies []*model.Movie
+	theaters []*model.Theater
+	todos []*model.Todo
 }

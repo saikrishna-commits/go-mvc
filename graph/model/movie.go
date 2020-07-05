@@ -1,5 +1,6 @@
 package model
 
+import "time"
 
 type ImdbRating struct {
 	Rating float64 `json:"rating,omitempty"`
@@ -13,8 +14,8 @@ type Movie struct {
 	Directors   []string   `json:"directors"`
 	Genres      []string   `json:"genres,omitempty"`
 	Year        int64      `json:"year,omitempty"`
-    // Released    time.Time  `json:"released,omitempty"`
-    //  LastUpdated time.Time  `json:"lastUpdated,omitempty"`
+    Released    time.Time  `json:"released,omitempty"`
+    LastUpdated time.Time  `json:"lastUpdated,omitempty"`
 	ImdbRating  ImdbRating `bson:"imdb" json:"imdb"`  // nested elements
 }
 

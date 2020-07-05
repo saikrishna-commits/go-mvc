@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -68,13 +69,15 @@ type ComplexityRoot struct {
 	}
 
 	Movie struct {
-		Cast       func(childComplexity int) int
-		Directors  func(childComplexity int) int
-		Genres     func(childComplexity int) int
-		ID         func(childComplexity int) int
-		ImdbRating func(childComplexity int) int
-		Title      func(childComplexity int) int
-		Year       func(childComplexity int) int
+		Cast        func(childComplexity int) int
+		Directors   func(childComplexity int) int
+		Genres      func(childComplexity int) int
+		ID          func(childComplexity int) int
+		ImdbRating  func(childComplexity int) int
+		LastUpdated func(childComplexity int) int
+		Released    func(childComplexity int) int
+		Title       func(childComplexity int) int
+		Year        func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -83,20 +86,22 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Movies   func(childComplexity int) int
-		Theatres func(childComplexity int) int
+		Theaters func(childComplexity int) int
 		Todos    func(childComplexity int) int
 	}
 
-	Theatre struct {
+	Theater struct {
 		Location  func(childComplexity int) int
-		TheatreID func(childComplexity int) int
+		TheaterID func(childComplexity int) int
 	}
 
 	Todo struct {
-		Done func(childComplexity int) int
-		ID   func(childComplexity int) int
-		Text func(childComplexity int) int
-		User func(childComplexity int) int
+		Done       func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Text       func(childComplexity int) int
+		User       func(childComplexity int) int
+		UserLoader func(childComplexity int) int
+		UserRaw    func(childComplexity int) int
 	}
 
 	User struct {
@@ -114,10 +119,12 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Todos(ctx context.Context) ([]*model.Todo, error)
 	Movies(ctx context.Context) ([]*model.Movie, error)
-	Theatres(ctx context.Context) ([]*model.Theatre, error)
+	Theaters(ctx context.Context) ([]*model.Theater, error)
 }
 type TodoResolver interface {
 	User(ctx context.Context, obj *model.Todo) (*model.User, error)
+	UserLoader(ctx context.Context, obj *model.Todo) (*model.User, error)
+	UserRaw(ctx context.Context, obj *model.Todo) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -240,6 +247,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Movie.ImdbRating(childComplexity), true
 
+	case "Movie.lastUpdated":
+		if e.complexity.Movie.LastUpdated == nil {
+			break
+		}
+
+		return e.complexity.Movie.LastUpdated(childComplexity), true
+
+	case "Movie.released":
+		if e.complexity.Movie.Released == nil {
+			break
+		}
+
+		return e.complexity.Movie.Released(childComplexity), true
+
 	case "Movie.title":
 		if e.complexity.Movie.Title == nil {
 			break
@@ -273,12 +294,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Movies(childComplexity), true
 
-	case "Query.theatres":
-		if e.complexity.Query.Theatres == nil {
+	case "Query.theaters":
+		if e.complexity.Query.Theaters == nil {
 			break
 		}
 
-		return e.complexity.Query.Theatres(childComplexity), true
+		return e.complexity.Query.Theaters(childComplexity), true
 
 	case "Query.todos":
 		if e.complexity.Query.Todos == nil {
@@ -287,19 +308,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Todos(childComplexity), true
 
-	case "Theatre.location":
-		if e.complexity.Theatre.Location == nil {
+	case "Theater.location":
+		if e.complexity.Theater.Location == nil {
 			break
 		}
 
-		return e.complexity.Theatre.Location(childComplexity), true
+		return e.complexity.Theater.Location(childComplexity), true
 
-	case "Theatre.theatreId":
-		if e.complexity.Theatre.TheatreID == nil {
+	case "Theater.theaterId":
+		if e.complexity.Theater.TheaterID == nil {
 			break
 		}
 
-		return e.complexity.Theatre.TheatreID(childComplexity), true
+		return e.complexity.Theater.TheaterID(childComplexity), true
 
 	case "Todo.done":
 		if e.complexity.Todo.Done == nil {
@@ -328,6 +349,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Todo.User(childComplexity), true
+
+	case "Todo.userLoader":
+		if e.complexity.Todo.UserLoader == nil {
+			break
+		}
+
+		return e.complexity.Todo.UserLoader(childComplexity), true
+
+	case "Todo.userRaw":
+		if e.complexity.Todo.UserRaw == nil {
+			break
+		}
+
+		return e.complexity.Todo.UserRaw(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -418,6 +453,8 @@ type Todo {
 	text: String!
 	done: Boolean!
 	user: User!
+	userLoader: User
+	userRaw: User
 }
 
 type User {
@@ -442,8 +479,8 @@ type Location {
 	geo: Geo
 }
 
-type Theatre {
-	theatreId: Int
+type Theater {
+	theaterId: Int
 	location: Location
 }
 
@@ -454,8 +491,8 @@ type Movie {
 	directors: [String]
 	genres: [String]
 	year: Int
-	# released: Time
-	# lastUpdated: Time
+	released: Time
+	lastUpdated: Time
 	imdbRating: ImdbRating
 }
 
@@ -467,7 +504,7 @@ type ImdbRating {
 type Query {
 	todos: [Todo!]!
 	movies: [Movie]
-	theatres: [Theatre]
+	theaters: [Theater]
 }
 
 input NewTodo {
@@ -1049,6 +1086,68 @@ func (ec *executionContext) _Movie_year(ctx context.Context, field graphql.Colle
 	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Movie_released(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Movie",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Released, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Movie_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Movie",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Movie_imdbRating(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1186,7 +1285,7 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 	return ec.marshalOMovie2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐMovie(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_theatres(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_theaters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1203,7 +1302,7 @@ func (ec *executionContext) _Query_theatres(ctx context.Context, field graphql.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Theatres(rctx)
+		return ec.resolvers.Query().Theaters(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1212,9 +1311,9 @@ func (ec *executionContext) _Query_theatres(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Theatre)
+	res := resTmp.([]*model.Theater)
 	fc.Result = res
-	return ec.marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx, field.Selections, res)
+	return ec.marshalOTheater2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheater(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1286,7 +1385,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Theatre_theatreId(ctx context.Context, field graphql.CollectedField, obj *model.Theatre) (ret graphql.Marshaler) {
+func (ec *executionContext) _Theater_theaterId(ctx context.Context, field graphql.CollectedField, obj *model.Theater) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1294,7 +1393,7 @@ func (ec *executionContext) _Theatre_theatreId(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Theatre",
+		Object:   "Theater",
 		Field:    field,
 		Args:     nil,
 		IsMethod: false,
@@ -1303,7 +1402,7 @@ func (ec *executionContext) _Theatre_theatreId(ctx context.Context, field graphq
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TheatreID, nil
+		return obj.TheaterID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1312,12 +1411,12 @@ func (ec *executionContext) _Theatre_theatreId(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Theatre_location(ctx context.Context, field graphql.CollectedField, obj *model.Theatre) (ret graphql.Marshaler) {
+func (ec *executionContext) _Theater_location(ctx context.Context, field graphql.CollectedField, obj *model.Theater) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1325,7 +1424,7 @@ func (ec *executionContext) _Theatre_location(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Theatre",
+		Object:   "Theater",
 		Field:    field,
 		Args:     nil,
 		IsMethod: false,
@@ -1343,9 +1442,9 @@ func (ec *executionContext) _Theatre_location(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Location)
+	res := resTmp.(model.Location)
 	fc.Result = res
-	return ec.marshalOLocation2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx, field.Selections, res)
+	return ec.marshalOLocation2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Todo_id(ctx context.Context, field graphql.CollectedField, obj *model.Todo) (ret graphql.Marshaler) {
@@ -1482,6 +1581,68 @@ func (ec *executionContext) _Todo_user(ctx context.Context, field graphql.Collec
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Todo_userLoader(ctx context.Context, field graphql.CollectedField, obj *model.Todo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Todo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Todo().UserLoader(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Todo_userRaw(ctx context.Context, field graphql.CollectedField, obj *model.Todo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Todo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Todo().UserRaw(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -2782,6 +2943,10 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Movie_genres(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._Movie_year(ctx, field, obj)
+		case "released":
+			out.Values[i] = ec._Movie_released(ctx, field, obj)
+		case "lastUpdated":
+			out.Values[i] = ec._Movie_lastUpdated(ctx, field, obj)
 		case "imdbRating":
 			out.Values[i] = ec._Movie_imdbRating(ctx, field, obj)
 		default:
@@ -2866,7 +3031,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_movies(ctx, field)
 				return res
 			})
-		case "theatres":
+		case "theaters":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2874,7 +3039,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_theatres(ctx, field)
+				res = ec._Query_theaters(ctx, field)
 				return res
 			})
 		case "__type":
@@ -2892,21 +3057,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var theatreImplementors = []string{"Theatre"}
+var theaterImplementors = []string{"Theater"}
 
-func (ec *executionContext) _Theatre(ctx context.Context, sel ast.SelectionSet, obj *model.Theatre) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, theatreImplementors)
+func (ec *executionContext) _Theater(ctx context.Context, sel ast.SelectionSet, obj *model.Theater) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, theaterImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Theatre")
-		case "theatreId":
-			out.Values[i] = ec._Theatre_theatreId(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("Theater")
+		case "theaterId":
+			out.Values[i] = ec._Theater_theaterId(ctx, field, obj)
 		case "location":
-			out.Values[i] = ec._Theatre_location(ctx, field, obj)
+			out.Values[i] = ec._Theater_location(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2956,6 +3121,28 @@ func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "userLoader":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Todo_userLoader(ctx, field, obj)
+				return res
+			})
+		case "userRaw":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Todo_userRaw(ctx, field, obj)
 				return res
 			})
 		default:
@@ -3674,30 +3861,8 @@ func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.Selec
 	return graphql.MarshalInt64(v)
 }
 
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOInt2int(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOInt2int(ctx, sel, *v)
-}
-
 func (ec *executionContext) marshalOLocation2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v model.Location) graphql.Marshaler {
 	return ec._Location(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐLocation(ctx context.Context, sel ast.SelectionSet, v *model.Location) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Location(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMovie2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐMovie(ctx context.Context, sel ast.SelectionSet, v model.Movie) graphql.Marshaler {
@@ -3806,11 +3971,11 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOTheatre2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v model.Theatre) graphql.Marshaler {
-	return ec._Theatre(ctx, sel, &v)
+func (ec *executionContext) marshalOTheater2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheater(ctx context.Context, sel ast.SelectionSet, v model.Theater) graphql.Marshaler {
+	return ec._Theater(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v []*model.Theatre) graphql.Marshaler {
+func (ec *executionContext) marshalOTheater2ᚕᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheater(ctx context.Context, sel ast.SelectionSet, v []*model.Theater) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3837,7 +4002,7 @@ func (ec *executionContext) marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑco
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTheatre2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx, sel, v[i])
+			ret[i] = ec.marshalOTheater2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheater(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3850,11 +4015,30 @@ func (ec *executionContext) marshalOTheatre2ᚕᚖgithubᚗcomᚋsaikrishnaᚑco
 	return ret
 }
 
-func (ec *executionContext) marshalOTheatre2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheatre(ctx context.Context, sel ast.SelectionSet, v *model.Theatre) graphql.Marshaler {
+func (ec *executionContext) marshalOTheater2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐTheater(ctx context.Context, sel ast.SelectionSet, v *model.Theater) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Theatre(ctx, sel, v)
+	return ec._Theater(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	return graphql.UnmarshalTime(v)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	return graphql.MarshalTime(v)
+}
+
+func (ec *executionContext) marshalOUser2githubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋsaikrishnaᚑcommitsᚋgoᚑmvcᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

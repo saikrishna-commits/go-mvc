@@ -9,6 +9,8 @@ type Todo {
 	text: String!
 	done: Boolean!
 	user: User!
+	userLoader: User
+	userRaw: User
 }
 
 type User {
@@ -33,8 +35,8 @@ type Location {
 	geo: Geo
 }
 
-type Theatre {
-	theatreId: Int
+type Theater {
+	theaterId: Int
 	location: Location
 }
 
@@ -45,8 +47,8 @@ type Movie {
 	directors: [String]
 	genres: [String]
 	year: Int
-	# released: Time
-	# lastUpdated: Time
+	released: Time
+	lastUpdated: Time
 	imdbRating: ImdbRating
 }
 
@@ -58,7 +60,7 @@ type ImdbRating {
 type Query {
 	todos: [Todo!]!
 	movies: [Movie]
-	theatres: [Theatre]
+	theaters: [Theater]
 }
 
 input NewTodo {
