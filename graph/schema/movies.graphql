@@ -1,0 +1,38 @@
+type Address {
+	street1: String
+	city: String
+	state: String
+	zipcode: String
+}
+
+type Geo {
+	type: String
+	coordinates: [Float]
+}
+
+type Location {
+	address: Address
+	geo: Geo
+}
+
+type Theater {
+	theaterId: Int
+	location: Location
+}
+
+type Movie {
+	_id: ID!
+	title: String
+	cast: [String]
+	directors: [String]
+	genres: [String]
+	year: Int
+	released: Time
+	lastUpdated: Time
+	imdbRating: ImdbRating
+}
+
+type ImdbRating {
+	rating: Float
+	votes: Int
+}

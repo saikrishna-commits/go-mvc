@@ -8,8 +8,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
-	db "github.com/saikrishna-commits/go-mvc/dbCon"
-	"github.com/saikrishna-commits/go-mvc/graph"
+	db "github.com/saikrishna-commits/go-mvc/db"
+	graph "github.com/saikrishna-commits/go-mvc/graph/Resolvers"
 	"github.com/saikrishna-commits/go-mvc/graph/generated"
 )
 
@@ -25,6 +25,7 @@ func main() {
 		port = defaultPort
 	}
 	db.ConnectDatabaseMongo() //connect to mongo
+	db.CreateSqlConnection()  //connect to mysql
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))

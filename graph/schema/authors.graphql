@@ -1,0 +1,26 @@
+type Author {
+	id: Int
+	firstName: String
+	lastName: String
+	email: String
+	birthDate: String
+	posts: [Post]
+}
+
+type Post {
+	postId: Int
+	authorId: Int
+	title: String
+}
+
+input NewPost {
+	authorId: Int
+	title: String
+}
+
+input NewAuthor {
+	id: Int
+	firstName: String
+	lastName: String
+	email: String
+}
