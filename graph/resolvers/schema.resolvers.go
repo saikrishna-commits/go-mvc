@@ -5,10 +5,8 @@ package graph
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"log"
-	"math/big"
 
 	"github.com/saikrishna-commits/go-mvc/db"
 	"github.com/saikrishna-commits/go-mvc/graph/generated"
@@ -17,23 +15,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (r *movieResolver) ID(ctx context.Context, obj *model.Movie) (string, error) {
+func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	randN, _ := rand.Int(rand.Reader, big.NewInt(1000))
-	todo := &model.Todo{
-		Text:   input.Text,
-		ID:     fmt.Sprintf("T%d", randN),
-		UserID: input.UserID, // fix this line
-	}
-	r.todos = append(r.todos, todo)
-	return todo, nil
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CreateAuthor(ctx context.Context, input model.NewAuthor) (*model.Author, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	return r.todos, nil
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
@@ -86,20 +81,42 @@ func (r *queryResolver) Theaters(ctx context.Context) ([]*model.Theater, error) 
 	return r.theaters, nil
 }
 
+func (r *queryResolver) Authors(ctx context.Context) ([]*model.Author, error) {
+	cur, err := db.SqlCon.Query("SELECT id,first_name as firstName ,last_name as LastName, email FROM authors LIMIT 2")
+
+	defer cur.Close()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for cur.Next() {
+		var id int64
+		var firstName, lastName, email string
+		err = cur.Scan(&id, &firstName, &lastName, &email)
+		if err != nil {
+			log.Println(err.Error()) // proper error handling instead of panic in your app
+		}
+		r.authors = append(r.authors, &model.Author{AuthorID: int(id), FirstName: firstName, LastName: lastName, Email: email})
+	}
+	return r.authors, nil
+}
+
+func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Post(ctx context.Context, id int) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Author(ctx context.Context, id int) (*model.Author, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
-	return &model.User{ID: obj.UserID, Name: "user " + obj.UserID}, nil
-}
-
-func (r *todoResolver) UserLoader(ctx context.Context, obj *model.Todo) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
-
-func (r *todoResolver) UserRaw(ctx context.Context, obj *model.Todo) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-// Movie returns generated.MovieResolver implementation.
-func (r *Resolver) Movie() generated.MovieResolver { return &movieResolver{r} }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -110,19 +127,6 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Todo returns generated.TodoResolver implementation.
 func (r *Resolver) Todo() generated.TodoResolver { return &todoResolver{r} }
 
-type movieResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type todoResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *theaterResolver) TheaterID(ctx context.Context, obj *model.Theater) (*int, error) {
-	panic("Not implemented")
-}
-
-type theaterResolver struct{ *Resolver }

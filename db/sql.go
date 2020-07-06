@@ -2,52 +2,23 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // postgres golang driver
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var PgCon *sql.DB
+//SqlCon does
+var SqlCon *sql.DB
 
-//CreatePgConnection does connects to Postgres
-func CreatePgConnection() *sql.DB {
-	// load .env file
-	err := godotenv.Load(".env")
-
+//CreateSqlConnection does
+func CreateSqlConnection() {
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/atom")
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Panic(err)
 	}
 
-	// Open the connection
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URI"))
-	PgCon = db
-
-	if err != nil {
-		panic(err)
+	if err = db.Ping(); err != nil {
+		log.Panic(err)
 	}
-
-	// check the connection
-	err = db.Ping()
-
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Successfully connected to PostGres .....")
-	// return the connection
-	return db
+	SqlCon = db
 }
-
-//LogAndQuery does print query and executes
-func LogAndQuery(db *sql.DB, query string, args ...interface{}) *sql.Rows {
-	fmt.Println(query)
-	res, err := db.Query(query, args...)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-

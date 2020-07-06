@@ -9,8 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 	db "github.com/saikrishna-commits/go-mvc/db"
-	"github.com/saikrishna-commits/go-mvc/graph"
-	dataloader "github.com/saikrishna-commits/go-mvc/graph/dataloaders"
+	graph "github.com/saikrishna-commits/go-mvc/graph/Resolvers"
 	"github.com/saikrishna-commits/go-mvc/graph/generated"
 )
 
@@ -26,11 +25,11 @@ func main() {
 		port = defaultPort
 	}
 	db.ConnectDatabaseMongo() //connect to mongo
-	db.CreatePgConnection() //connect to pg
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{mongo: db.MongoClient,sql: db.PgCon}}))
+	db.CreateSqlConnection()  //connect to mysql
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", dataloader.Middleware(db.PgCon,db.MongoClient,srv))
+	http.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
